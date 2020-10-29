@@ -2,34 +2,34 @@ class Packetbeat < Formula
   desc "Lightweight Shipper for Network Data"
   homepage "https://www.elastic.co/products/beats/packetbeat"
   url "https://github.com/elastic/beats.git",
-    tag:      "v7.9.2",
-    revision: "2ab907f5ccecf9fd82fe37105082e89fd871f684"
+    tag:      "v7.9.3",
+    revision: "7aab6a9659749802201db8020c4f04b74cec2169"
   license "Apache-2.0"
+  revision 1
   head "https://github.com/elastic/beats.git"
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "1c6a9026941bfb70096b982cd5581ec527bf34dceed82bc3a3071b7d131a9609" => :catalina
-    sha256 "8503ab78139082d6aff6e9cc482bb234aeb1fc632857d347ba95e3164c4cab4d" => :mojave
-    sha256 "ec9876f7c3bcc43b3d47961538a86d7366cb802f8bba07676b668c0058ef33df" => :high_sierra
+    sha256 "8cc7ffaa87e8e059d2fc56c202cc5844f2bcd05358c1bc16588d70c1c9dec12d" => :catalina
+    sha256 "3dc4ac4e4e4e06cccd0f2b4c9264d264b4dca4ebf1377954d8fd294b63938676" => :mojave
+    sha256 "e9240b9b19b296a1bcb7f641e76a5661ac39e2ecd64b5d019f61c0940c9fd9d6" => :high_sierra
   end
 
   depends_on "go" => :build
-  depends_on "python@3.8" => :build
+  depends_on "python@3.9" => :build
+  depends_on "freetype"
+  depends_on "jpeg"
 
   resource "virtualenv" do
-    url "https://files.pythonhosted.org/packages/b1/72/2d70c5a1de409ceb3a27ff2ec007ecdd5cc52239e7c74990e32af57affe9/virtualenv-15.2.0.tar.gz"
-    sha256 "1d7e241b431e7afce47e77f8843a276f652699d1fa4f93b9d8ce0076fd7b0b54"
-  end
-
-  # Update MarkupSafe to 1.1.1, remove with next release
-  # https://github.com/elastic/beats/pull/20105
-  patch do
-    url "https://github.com/elastic/beats/commit/5a6ca609259956ff5dd8e4ec80b73e6c96ff54b2.patch?full_index=1"
-    sha256 "b362f8921611297a0879110efcb88a04cf660d120ad81cd078356d502ba4c2ce"
+    url "https://files.pythonhosted.org/packages/28/a8/96e411bfe45092f8aeebc5c154b2f0892bd9ea462d6934b534c1ce7b7402/virtualenv-20.0.35.tar.gz"
+    sha256 "2a72c80fa2ad8f4e2985c06e6fc12c3d60d060e410572f553c90619b0f6efaf3"
   end
 
   def install
+    # Fix compatibility with recent setuptools, remove in 7.10
+    # https://github.com/elastic/beats/pull/20105
+    inreplace "libbeat/tests/system/requirements.txt", "MarkupSafe==1.0", "MarkupSafe==1.1.1"
+
     # remove non open source files
     rm_rf "x-pack"
 
@@ -39,8 +39,11 @@ class Packetbeat < Formula
     xy = Language::Python.major_minor_version "python3"
     ENV.prepend_create_path "PYTHONPATH", buildpath/"vendor/lib/python#{xy}/site-packages"
 
+    # Help Pillow find zlib
+    ENV.append_to_cflags "-I#{MacOS.sdk_path}/usr/include"
+
     resource("virtualenv").stage do
-      system Formula["python@3.8"].opt_bin/"python3", *Language::Python.setup_install_args(buildpath/"vendor")
+      system Formula["python@3.9"].opt_bin/"python3", *Language::Python.setup_install_args(buildpath/"vendor")
     end
 
     ENV.prepend_path "PATH", buildpath/"vendor/bin" # for virtualenv
@@ -49,7 +52,7 @@ class Packetbeat < Formula
     cd "src/github.com/elastic/beats/packetbeat" do
       system "make", "mage"
       # prevent downloading binary wheels during python setup
-      system "make", "PIP_INSTALL_PARAMS=--no-binary :all", "python-env"
+      system "make", "PIP_INSTALL_PARAMS=--use-pep517 --no-binary :all:", "python-env"
       system "mage", "-v", "build"
       ENV.deparallelize
       system "mage", "-v", "update"

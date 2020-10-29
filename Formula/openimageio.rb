@@ -5,7 +5,7 @@ class Openimageio < Formula
   version "2.1.18"
   sha256 "e2cf54f5b28e18fc88e76e1703f2e39bf144c88378334527e4a1246974659a85"
   license "BSD-3-Clause"
-  revision 1
+  revision 3
   head "https://github.com/OpenImageIO/oiio.git"
 
   livecheck do
@@ -14,9 +14,9 @@ class Openimageio < Formula
   end
 
   bottle do
-    sha256 "38683156e032d0dd6314399ebcc1ad4b59135e6b221f39fef74fd027fc040990" => :catalina
-    sha256 "e2b1b3d5ca05a0a8cd87675a046e2b9ff25f3096b8c1fd736a1b5431dd6c1be8" => :mojave
-    sha256 "e709bacc08751c67528daab022bd76ba32fdb20a061e4a8d509bc75997af13f7" => :high_sierra
+    sha256 "c72b13f97c86ca85d0ec3e9a0b23253c61a188cabe699aee64d0d121211afae4" => :catalina
+    sha256 "58fa3b0c81edc2d01c748ba1226515ace90df1d37c95f38001de8deae0391875" => :mojave
+    sha256 "edc2bc96b42eb4e30bfb433d5105e11c0bc04bcf1c6fc1c3af63d5f285b3670c" => :high_sierra
   end
 
   depends_on "cmake" => :build
@@ -34,7 +34,7 @@ class Openimageio < Formula
   depends_on "libtiff"
   depends_on "opencolorio"
   depends_on "openexr"
-  depends_on "python@3.8"
+  depends_on "python@3.9"
   depends_on "webp"
 
   def install
@@ -51,9 +51,9 @@ class Openimageio < Formula
       -DUSE_QT=OFF
     ]
 
-    # CMake picks up the system's python shared library, even if we have a brewed one.
-    py3ver = Language::Python.major_minor_version Formula["python@3.8"].opt_bin/"python3"
-    py3prefix = Formula["python@3.8"].opt_frameworks/"Python.framework/Versions/#{py3ver}"
+    # CMake picks up the system's python dylib, even if we have a brewed one.
+    py3ver = Language::Python.major_minor_version Formula["python@3.9"].opt_bin/"python3"
+    py3prefix = Formula["python@3.9"].opt_frameworks/"Python.framework/Versions/#{py3ver}"
 
     ENV["PYTHONPATH"] = lib/"python#{py3ver}/site-packages"
 
@@ -87,6 +87,6 @@ class Openimageio < Formula
       import OpenImageIO
       print(OpenImageIO.VERSION_STRING)
     EOS
-    assert_match version.to_s, pipe_output(Formula["python@3.8"].opt_bin/"python3", output, 0)
+    assert_match version.to_s, pipe_output(Formula["python@3.9"].opt_bin/"python3", output, 0)
   end
 end
