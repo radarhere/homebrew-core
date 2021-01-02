@@ -10,7 +10,6 @@ env:
   HOMEBREW_CHANGE_ARCH_TO_ARM: 1
 jobs:
   tap_syntax:
-    if: github.repository == 'Homebrew/homebrew-core'
     runs-on: ubuntu-latest
     outputs:
       run-tests: ${{ steps.check-labels.outputs.result }}
@@ -82,7 +81,7 @@ jobs:
 
   tests:
     needs: tap_syntax
-    if: github.event_name == 'pull_request' && needs.tap_syntax.outputs.run-tests
+    if: needs.tap_syntax.outputs.run-tests
     strategy:
       matrix:
         version: ['11-arm', '11.0', '10.15', '10.14']
